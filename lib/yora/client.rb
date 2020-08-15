@@ -5,7 +5,7 @@ require_relative 'message'
 
 module Yora
   MAX_RESPONSE_LEN = 8196
-  TIME_OUT = 5
+  TIME_OUT = 0.5
 
   class Client
     include Message

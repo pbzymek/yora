@@ -29,6 +29,8 @@ server = Yora::Server.new(node_id,
                           Yora::StateMachine::KeyValueStore.new,
                           peers)
 
+trap("SIGINT") { puts "Shutting down."; server.leave; exit 1 }
+
 if join
   server.join
 elsif leave

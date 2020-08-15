@@ -45,7 +45,7 @@ module Yora
   class Server
     include Message
 
-    attr_reader :node, :in_queue, :out_queue
+    attr_reader :node, :in_queue, :out_queue, :sigterm
     attr_writer :debug
 
     def initialize(node_id, node_address, handler, peers, second_per_tick = 2)
@@ -89,12 +89,17 @@ module Yora
     end
 
     def leave
-      client = Client.new(@peers.values)
-      response = client.command(:leave, peer: @node.node_id, peer_address: "#{@host}:#{@port}")
-      $stderr.puts "-- got #{response}"
+      if !node.leader?
+        client = Client.new(@peers.values)
+        response = client.command(:leave, peer: @node.node_id, peer_address: "#{@host}:#{@prt}")
+        $stderr.puts "-- got #{response}"
+      end
+
+      @sigterm = true
     end
 
     def bootstrap
+
       timer = Thread.new do
         timer_loop
       end
@@ -173,6 +178,9 @@ module Yora
         $stderr.puts "#{node.role.class}, term = #{node.current_term}, " \
           "cluster = #{node.cluster}, commit = #{node.last_commit}, " \
           "expires in #{expiry} ticks"
+        if sigterm
+          break
+        end
       end
     rescue => ex
       $stderr.puts "error #{ex} in processor_loop"
