@@ -6,6 +6,8 @@ module Yora
     class SimpleFile
       include Message
 
+      attr_reader :node_address
+
       def initialize(node_id, node_address)
         @node_id, @node_address = node_id, node_address
         FileUtils.rm_r "data/#{node_id}", :force => true
