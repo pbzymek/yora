@@ -31,6 +31,9 @@ module Yora
     def handler
       node.handler
     end
+
+    def leave
+    end
   end
 
   module CandidateOrLeader

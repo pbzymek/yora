@@ -32,7 +32,7 @@ module Yora
       @role = Follower.new(self)
     end
 
-    attr_reader :node_id, :handler, :timer, :transmitter, :current_term, :persistence
+    attr_reader :node_id, :handler, :timer, :transmitter, :current_term, :persistence, :node_address
     attr_accessor :role, :leader_id, :voted_for, :cluster, :log_container
 
     def dispatch(opts)

@@ -89,17 +89,12 @@ module Yora
     end
 
     def leave
-      if !node.leader?
-        client = Client.new(@peers.values)
-        response = client.command(:leave, peer: @node.node_id, peer_address: "#{@host}:#{@prt}")
-        $stderr.puts "-- got #{response}"
-      end
+      node.role.leave
 
       @sigterm = true
     end
 
     def bootstrap
-
       timer = Thread.new do
         timer_loop
       end
@@ -145,17 +140,16 @@ module Yora
     def sender_loop
       socket = UDPSocket.new
       loop do
-        msg = @out_queue.pop
+        while(msg = @out_queue.pop) do
+          raw = serialize(msg)
 
-        raw = serialize(msg)
-
-        addr = msg[:send_to]
-        if addr
-          host, port = addr.split(':')
-          # $stderr.puts "sending #{msg[:message_type]} to #{addr}"
-          _ = socket.send(raw, 0, host, port.to_i)
-        else
-          $stderr.puts "quietly drop #{msg[:message_type]} unknown destination"
+          addr = msg[:send_to]
+          if addr
+            host, port = addr.split(':')
+            _ = socket.send(raw, 0, host, port.to_i)
+          else
+            $stderr.puts "quietly drop #{msg[:message_type]} unknown destination"
+          end
         end
       end
     rescue => ex
@@ -166,21 +160,20 @@ module Yora
 
     def processor_loop
       loop do
-        msg = @in_queue.pop
+        while msg = @in_queue.pop
+          $stderr.puts "processing #{msg[:message_type]}, #{msg[:success]} "\
+            "term = #{msg[:term]}, match index = #{msg[:match_index]}  " \
+            "from #{msg[:client] || msg[:peer]}"
 
-        $stderr.puts "processing #{msg[:message_type]}, #{msg[:success]} "\
-          "term = #{msg[:term]}, match index = #{msg[:match_index]}  " \
-          "from #{msg[:client] || msg[:peer]}"
+          @node.dispatch(msg)
 
-        @node.dispatch(msg)
-
-        expiry = (@node.seconds_until_timeout / @second_per_tick).to_f
-        $stderr.puts "#{node.role.class}, term = #{node.current_term}, " \
-          "cluster = #{node.cluster}, commit = #{node.last_commit}, " \
-          "expires in #{expiry} ticks"
-        if sigterm
-          break
+          expiry = (@node.seconds_until_timeout / @second_per_tick).to_f
+          $stderr.puts "#{node.role.class}, term = #{node.current_term}, " \
+            "cluster = #{node.cluster}, commit = #{node.last_commit}, " \
+            "expires in #{expiry} ticks"
         end
+
+        break if sigterm
       end
     rescue => ex
       $stderr.puts "error #{ex} in processor_loop"

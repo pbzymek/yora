@@ -238,5 +238,17 @@ module Yora
     def seconds_until_timeout
       0
     end
+
+    def leave
+      node.cluster.delete(node.node_id)
+      node.role.next_indices.delete(node.node_id)
+      node.role.match_indices.delete(node.node_id)
+
+      entry = ConfigLogEntry.new(node.current_term, node.cluster)
+      node.log_container.append(entry)
+
+      node.role.broadcast_entries(true)
+      sleep @second_per_tick
+    end
   end
 end
