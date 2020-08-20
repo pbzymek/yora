@@ -12,6 +12,7 @@ module Yora
 
     def to_json(*opts)
       {
+        'time' => Time.now.to_f,
         'json_class'   => self.class.name,
         'data' => { 'term' => @term,
                     'command' => @command,

@@ -51,7 +51,7 @@ module Yora
     end
 
     def on_tick
-      if election_timeout && Time.now > election_timeout
+      if election_timeout && Time.now.to_f > election_timeout
         node.role = Candidate.new(node)
         node.role.update_election(peer: node.node_id, term: node.current_term, vote_granted: true)
       end
@@ -79,7 +79,7 @@ module Yora
     end
 
     def seconds_until_timeout
-      (election_timeout - Time.now).to_i
+      (election_timeout - Time.now.to_f).to_f
     end
   end
 end

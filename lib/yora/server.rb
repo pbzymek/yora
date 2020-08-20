@@ -38,7 +38,7 @@ module Yora
     end
 
     def next
-      Time.now + @min + Random.rand(@max - @min)
+      Time.now.to_f + @min + Random.rand(@max - @min)
     end
   end
 
@@ -169,7 +169,7 @@ module Yora
 
         @node.dispatch(msg)
 
-        expiry = (@node.seconds_until_timeout / @second_per_tick).to_i
+        expiry = (@node.seconds_until_timeout / @second_per_tick).to_f
         $stderr.puts "#{node.role.class}, term = #{node.current_term}, " \
           "cluster = #{node.cluster}, commit = #{node.last_commit}, " \
           "expires in #{expiry} ticks"

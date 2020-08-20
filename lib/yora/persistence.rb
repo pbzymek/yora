@@ -8,7 +8,7 @@ module Yora
 
       def initialize(node_id, node_address)
         @node_id, @node_address = node_id, node_address
-
+        FileUtils.rm_r "data/#{node_id}", :force => true
         FileUtils.mkdir_p "data/#{node_id}"
 
         @log_path = "data/#{node_id}/log.txt"
