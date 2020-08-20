@@ -144,9 +144,9 @@ module Yora
     end
 
     def sender_loop
-      socket = UDPSocket.new
       loop do
         while(msg = @out_queue.pop) do
+          socket = UDPSocket.new
           raw = serialize(msg)
 
           addr = msg[:send_to]
