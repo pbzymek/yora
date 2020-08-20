@@ -34,6 +34,13 @@ module Yora
 
     def leave
     end
+
+    def broadcast_heartbeat(_)
+    end
+
+    def on_heartbeat(opts)
+      transmitter.send_message(opts[:client], :heartbeat_resp, { ok: true })
+    end
   end
 
   module CandidateOrLeader

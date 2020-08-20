@@ -4,7 +4,7 @@ module Yora
 
     def initialize(id, transmitter, handler, timer, persistence, second_per_tick)
       @node_id = id
-
+      @node_address = persistence.node_address
       @handler = handler
       @handler.node = self
 
@@ -56,6 +56,10 @@ module Yora
         on_client_command(opts)
       when :query
         on_client_query(opts)
+      when :broadcast_heartbeat
+        on_broadcast_heartbeat(opts)
+      when :heartbeat
+        on_heartbeat(opts)
       else
         $stderr.puts "don't known how to dispatch message #{opts[:message_type]}"
       end
@@ -86,6 +90,10 @@ module Yora
       @role.on_install_snapshot(opts)
     end
 
+    def on_heartbeat(opts)
+      @role.on_heartbeat(opts)
+    end
+
     ## handle rpc response
 
     def on_request_vote_resp(opts)
@@ -111,6 +119,10 @@ module Yora
 
     def on_client_query(opts)
       @role.on_client_query(opts)
+    end
+
+    def on_broadcast_heartbeat(opts)
+      @role.broadcast_heartbeat(opts)
     end
 
     ## handle timeout event

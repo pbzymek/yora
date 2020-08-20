@@ -1,11 +1,15 @@
 require_relative 'role'
+require_relative 'message'
 
 module Yora
   class Leader
     include AnyRoles
     include CandidateOrLeader
+    include ::Yora::Message
 
     attr_reader :node, :next_indices, :match_indices
+
+    HEARTBEAT_TIMEOUT = 0.5
 
     def initialize(node)
       @node = node
@@ -249,6 +253,40 @@ module Yora
 
       node.role.broadcast_entries(true)
       sleep node.second_per_tick
+    end
+
+    def broadcast_heartbeat(_)
+      node.cluster.each do |node_id, node_address|
+        next if node_id == node.node_id
+
+        socket = UDPSocket.new
+        host, port = node_address.split(':')
+
+        request = { send_to: node_address, message_type: "heartbeat", peer: node.node_id }
+
+        len = socket.send(serialize(request), 0, host, port.to_i)
+        $stderr.puts "#{len} bytes sent to: #{node_address}, waiting for reply"
+
+        readable, _, _ = IO.select([socket], nil, nil, HEARTBEAT_TIMEOUT)
+
+        if !readable
+          $stderr.puts "got no heartbeat after #{HEARTBEAT_TIMEOUT} secs from #{node_address}"
+
+          node.cluster.delete(node_id)
+          node.role.next_indices.delete(node_id)
+          node.role.match_indices.delete(node_id)
+
+          entry = ConfigLogEntry.new(node.current_term, node.cluster)
+          node.log_container.append(entry)
+
+          node.role.broadcast_entries(true)
+        end
+        socket.close
+      end
+    rescue => ex
+      $stderr.puts "error #{ex} in heartbeat thread"
+      $stderr.puts ex.backtrace.join("\n")
+      exit(2)
     end
   end
 end

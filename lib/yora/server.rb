@@ -1,11 +1,10 @@
 require 'socket'
 require 'json'
 
+require_relative 'client'
 require_relative 'message'
 
 module Yora
-  DEFAULT_UDP_PORT = 2358
-
   class Transmitter
     attr_reader :server
 
@@ -47,6 +46,9 @@ module Yora
 
     attr_reader :node, :in_queue, :out_queue, :sigterm
     attr_writer :debug
+
+    CLIENT_MESSAGE_TYPE = %w(command heartbeat query)
+    HEARTBEAT_TTL = Yora::TIME_OUT
 
     def initialize(node_id, node_address, handler, peers, second_per_tick = 2)
       @host, @port = node_address.split(':')
@@ -107,9 +109,13 @@ module Yora
         sender_loop
       end
 
+      heartbeat = Thread.new do
+        heartbeat_loop
+      end
+
       processor_loop
 
-      [timer, receiver, sender].each(&:join)
+      [timer, receiver, sender, heartbeat].each(&:join)
     end
 
     def timer_loop
@@ -124,7 +130,7 @@ module Yora
       Socket.udp_server_loop(@host, @port) do |raw, socket|
         msg = deserialize(raw)
 
-        if msg[:message_type] == 'command' || msg[:message_type] == 'query'
+        if CLIENT_MESSAGE_TYPE.include?(msg[:message_type])
           addr = socket.remote_address
           msg[:client] = "#{addr.ip_address}:#{addr.ip_port}"
         end
@@ -156,6 +162,13 @@ module Yora
       $stderr.puts "error #{ex} in sender thread"
       $stderr.puts ex.backtrace.join("\n")
       exit(2)
+    end
+
+    def heartbeat_loop
+      loop do
+        @in_queue << { message_type: :broadcast_heartbeat }
+        sleep HEARTBEAT_TTL
+      end
     end
 
     def processor_loop
