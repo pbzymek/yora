@@ -139,22 +139,10 @@ module Yora
     end
 
     def on_node_leave(opts)
-      peer = opts[:peer]
-
-      cluster.delete(peer)
-      next_indices.delete(peer)
-      match_indices.delete(peer)
-
-      # $stderr.puts "-- node #{peer},#{peer_address} left cluster #{cluster}"
-
-      entry = ConfigLogEntry.new(current_term, cluster)
-
+      remove_node_from_cluster(opts[:peer])
       transmitter.send_message(opts[:client], :command_resp,
                                success: true,
                                cluster: cluster)
-
-      log_container.append(entry)
-      broadcast_entries(false)
     end
 
     def append_noop_entry
@@ -243,8 +231,19 @@ module Yora
       0
     end
 
+    def remove_node_from_cluster(node_id)
+      cluster.delete(node_id)
+      next_indices.delete(node_id)
+      match_indices.delete(node_id)
+
+      entry = ConfigLogEntry.new(node.current_term, node.cluster)
+      log_container.append(entry)
+
+      broadcast_entries(false)
+    end
+
     def leave
-      remove_node_from_cluster(node.node_id)
+      remove_node_from_cluster(node_id)
       sleep node.second_per_tick
     end
 
@@ -273,16 +272,5 @@ module Yora
       $stderr.puts ex.backtrace.join("\n")
       exit(2)
     end
-  end
-
-  def remove_node_from_cluster(node_id)
-    node.cluster.delete(node.node_id)
-    node.role.next_indices.delete(node.node_id)
-    node.role.match_indices.delete(node.node_id)
-
-    entry = ConfigLogEntry.new(node.current_term, node.cluster)
-    node.log_container.append(entry)
-
-    node.role.broadcast_entries(true)
   end
 end
