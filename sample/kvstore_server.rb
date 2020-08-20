@@ -26,7 +26,7 @@ puts "starting node #{node_id}, bind #{bind}"
 
 server = Yora::Server.new(node_id,
                           bind,
-                          Yora::StateMachine::KeyValueStore,
+                          Yora::StateMachine::KeyValueStore.new,
                           peers)
 
 if join
