@@ -244,14 +244,7 @@ module Yora
     end
 
     def leave
-      node.cluster.delete(node.node_id)
-      node.role.next_indices.delete(node.node_id)
-      node.role.match_indices.delete(node.node_id)
-
-      entry = ConfigLogEntry.new(node.current_term, node.cluster)
-      node.log_container.append(entry)
-
-      node.role.broadcast_entries(true)
+      remove_node_from_cluster(node.node_id)
       sleep node.second_per_tick
     end
 
@@ -271,15 +264,7 @@ module Yora
 
         if !readable
           $stderr.puts "got no heartbeat after #{HEARTBEAT_TIMEOUT} secs from #{node_address}"
-
-          node.cluster.delete(node_id)
-          node.role.next_indices.delete(node_id)
-          node.role.match_indices.delete(node_id)
-
-          entry = ConfigLogEntry.new(node.current_term, node.cluster)
-          node.log_container.append(entry)
-
-          node.role.broadcast_entries(true)
+          remove_node_from_cluster(node_id)
         end
         socket.close
       end
@@ -288,5 +273,16 @@ module Yora
       $stderr.puts ex.backtrace.join("\n")
       exit(2)
     end
+  end
+
+  def remove_node_from_cluster(node_id)
+    node.cluster.delete(node.node_id)
+    node.role.next_indices.delete(node.node_id)
+    node.role.match_indices.delete(node.node_id)
+
+    entry = ConfigLogEntry.new(node.current_term, node.cluster)
+    node.log_container.append(entry)
+
+    node.role.broadcast_entries(true)
   end
 end
