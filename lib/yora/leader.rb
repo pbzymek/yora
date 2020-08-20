@@ -248,7 +248,7 @@ module Yora
       node.log_container.append(entry)
 
       node.role.broadcast_entries(true)
-      sleep @second_per_tick
+      sleep node.second_per_tick
     end
   end
 end

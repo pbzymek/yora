@@ -2,7 +2,7 @@ module Yora
   class Node
     MAX_LOG_ENTRIES = 128
 
-    def initialize(id, transmitter, handler, timer, persistence)
+    def initialize(id, transmitter, handler, timer, persistence, second_per_tick)
       @node_id = id
 
       @handler = handler
@@ -11,6 +11,7 @@ module Yora
       @timer = timer
       @transmitter = transmitter
       @persistence = persistence
+      @second_per_tick = second_per_tick
 
       metadata = @persistence.read_metadata
       @current_term = metadata[:current_term]
@@ -32,7 +33,7 @@ module Yora
       @role = Follower.new(self)
     end
 
-    attr_reader :node_id, :handler, :timer, :transmitter, :current_term, :persistence, :node_address
+    attr_reader :node_id, :handler, :timer, :transmitter, :current_term, :persistence, :node_address, :second_per_tick
     attr_accessor :role, :leader_id, :voted_for, :cluster, :log_container
 
     def dispatch(opts)

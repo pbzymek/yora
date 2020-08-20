@@ -70,7 +70,7 @@ module Yora
 
       @timer = Timer.new(2 * @second_per_tick, 5 * @second_per_tick)
 
-      @node = Node.new(node_id, @transmitter, @handler, @timer, @persistence)
+      @node = Node.new(node_id, @transmitter, @handler, @timer, @persistence, @second_per_tick)
 
       @node.cluster = peers.merge(@node.cluster)
     end

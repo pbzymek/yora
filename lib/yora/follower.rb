@@ -126,7 +126,6 @@ module Yora
     end
 
     def leave
-      $stderr.puts "-- leaveing the cluster, here are the client peers: #{@peers.values }"
       client = Client.new([node.cluster[node.leader_id]])
       response = client.command(:leave, peer: @node.node_id, peer_address: "#{@host}:#{@port}")
       $stderr.puts "-- got #{response}"
