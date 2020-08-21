@@ -4,7 +4,7 @@ require 'socket'
 require_relative 'message'
 
 module Yora
-  MAX_RESPONSE_LEN = 8196
+  MAX_RESPONSE_LEN = 65535
   TIME_OUT = 0.5
 
   class Client
